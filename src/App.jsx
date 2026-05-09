@@ -15,6 +15,9 @@ export default class App extends React.Component {
     newDeckName: "",
     newCardFront: "",
     newCardBack: "",
+    editingCardId: null,
+    editFront: "",
+    editBack: "",
   };
 
   componentDidMount() {
@@ -91,13 +94,15 @@ export default class App extends React.Component {
 
   deleteCard = (cardId) => () => {
     this.setState(
-      (prev) => ({
-        decks: prev.decks.map((d) =>
-          d.id === prev.selectedDeckNumber
-            ? { ...d, cards: d.cards.filter((c) => c.id !== cardId) }
-            : d
-        ),
-      }),
+      (prev) => {
+        const filtered = prev.decks.filter((d) => d.id !== cardId);
+        return {
+          decks: filtered,
+          selectedDeckNumber: filtered.length > 0 ? filtered[0].id : null,
+          studyMode: false,
+          editingCardId: null,
+        };
+      },
       this.saveToLS
     );
   };
@@ -155,6 +160,47 @@ export default class App extends React.Component {
     this.toggleLearned(card.id)();
   };
 
+  startEditCard = (card) => () => {
+    this.setState({
+      editingCardId: card.id,
+      editFront: card.front,
+      editBack: card.back,
+    });
+  };
+
+  cancelEditCard = () => {
+    this.setState({
+      editingCardId: null,
+      editFront: "",
+      editBack: "",
+    });
+  };
+
+  saveEdit = () => {
+    const front = this.state.editFront.trim();
+    const back = this.state.editBack.trim();
+    if (front === "" || back === "") return;
+
+    this.setState(
+      (prev) => ({
+        decks: prev.decks.map((d) =>
+          d.id === prev.selectedDeckNumber
+            ? {
+                ...d,
+                cards: d.cards.map((c) =>
+                  c.id === prev.editingCardId ? { ...c, front, back } : c
+                ),
+              }
+            : d
+        ),
+        editingCardId: null,
+        editFront: "",
+        editBack: "",
+      }),
+      this.saveToLS
+    );
+  };
+
   render() {
     const currentDeck = this.state.decks.find((d) => d.id === this.state.selectedDeckNumber);
 
@@ -190,7 +236,14 @@ export default class App extends React.Component {
               <strong>Выбор колоды: </strong>
               <select
                 value={this.state.selectedDeckNumber || ""}
-                onChange={(e) => this.setState({ selectedDeckNumber: Number(e.target.value) })}
+                onChange={(e) =>
+                  this.setState({
+                    selectedDeckNumber: Number(e.target.value),
+                    editingCardId: null,
+                    editFront: "",
+                    editBack: "",
+                  })
+                }
               >
                 <option value="">-- не выбрано --</option>
                 {this.state.decks.map((d) => (
@@ -230,17 +283,60 @@ export default class App extends React.Component {
               ) : (
                 <div>
                   <div>Всего: {currentDeck.cards.length}</div>
-                  {currentDeck.cards.map((c) => (
-                    <div key={c.id} className="card-row">
-                      <input
-                        type="checkbox"
-                        checked={c.learned}
-                        onChange={this.toggleLearned(c.id)}
-                      />
-                      <span> {c.front} — {c.back} </span>
-                      <button type="button" onClick={this.deleteCard(c.id)}>Del</button>
-                    </div>
-                  ))}
+                  {currentDeck.cards.map((c) => {
+                    if (this.state.editingCardId === c.id) {
+                      return (
+                        <div key={c.id} className="card-row card-row--edit">
+                          <input
+                            type="text"
+                            name="editFront"
+                            value={this.state.editFront}
+                            onChange={this.inputChange}
+                            placeholder="Вопрос"
+                          />
+                          <input
+                            type="text"
+                            name="editBack"
+                            value={this.state.editBack}
+                            onChange={this.inputChange}
+                            placeholder="Ответ"
+                          />
+                          <div className="card-row-edit-actions">
+                            <button type="button" onClick={this.saveEdit}>
+                              Ок
+                            </button>
+                            <button type="button" onClick={this.cancelEditCard}>
+                              X
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={c.id} className="card-row">
+                        <input
+                          type="checkbox"
+                          checked={c.learned}
+                          onChange={this.toggleLearned(c.id)}
+                        />
+                        <span>
+                          {" "}
+                          {c.front} — {c.back}{" "}
+                        </span>
+                        <button type="button" onClick={this.startEditCard(c)}>
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="card-del"
+                          onClick={this.deleteCard(c.id)}
+                        >
+                          Del
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

@@ -135,7 +135,7 @@
   color: var(--text-h);
 }
 
-.card-row button {
+.card-row .card-del {
   margin: 0;
   padding: 0.35rem 0.55rem;
   font-size: 0.8rem;
@@ -145,11 +145,28 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .card-row button {
+  .card-row .card-del {
     border-color: #7f1d1d;
     background: #3f1010;
     color: #fecaca;
   }
+}
+
+.card-row--edit {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.card-row--edit input[type="text"] {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+.card-row-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
 }
 
 .start-test-wrap {
