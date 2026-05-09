@@ -66,7 +66,31 @@ export default class App extends React.Component {
           decks: filtered,
           selectedDeckNumber: filtered.length > 0 ? filtered[0].id : null,
           studyMode: false,
+          editingCardId: null,
+          editFront: "",
+          editBack: "",
         };
+      },
+      this.saveToLS
+    );
+  };
+
+  deleteCard = (cardId) => () => {
+    this.setState(
+      (prev) => {
+        const next = {
+          decks: prev.decks.map((d) =>
+            d.id === prev.selectedDeckNumber
+              ? { ...d, cards: d.cards.filter((c) => c.id !== cardId) }
+              : d
+          ),
+        };
+        if (prev.editingCardId === cardId) {
+          next.editingCardId = null;
+          next.editFront = "";
+          next.editBack = "";
+        }
+        return next;
       },
       this.saveToLS
     );
@@ -88,21 +112,6 @@ export default class App extends React.Component {
         newCardFront: "",
         newCardBack: "",
       }),
-      this.saveToLS
-    );
-  };
-
-  deleteCard = (cardId) => () => {
-    this.setState(
-      (prev) => {
-        const filtered = prev.decks.filter((d) => d.id !== cardId);
-        return {
-          decks: filtered,
-          selectedDeckNumber: filtered.length > 0 ? filtered[0].id : null,
-          studyMode: false,
-          editingCardId: null,
-        };
-      },
       this.saveToLS
     );
   };
